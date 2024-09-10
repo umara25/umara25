@@ -1,7 +1,11 @@
 <img align="center" src="https://github-readme-stats.vercel.app/api/top-langs/?username=umara25&show_icons=true&theme=tokyonight&layout=compact" />
 
 <h2>Programming Languages I Use</h2>
-    
+
+
+
+<img src="https://github-readme-streak-stats.herokuapp.com/?user=umara25&theme=synthwave&hide_border=true" alt="umara25's GitHub Stats" />
+
 <img align="left" alt="Python" width="35px" src="https://cdn.freebiesupply.com/logos/large/2x/python-5-logo-png-transparent.png" />
 <img align="left" alt="HTML5" width="35px" src="https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/html/html.png" />
 <img align="left" alt="CSS3" width="35px" src="https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/css/css.png" />
