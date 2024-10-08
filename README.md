@@ -1,5 +1,5 @@
 <h1 align="center">Hi 👋, I'm Umar</h1>
-<h3 align="center">A computer science student @ McMaster University</h3>
+<h3 align="center">I'm a computer science student @ McMaster University</h3>
 
 - 🔭 I’m currently working on [Velora](https://github.com/umara25/Velora)
 
