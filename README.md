@@ -1,6 +1,4 @@
 <h1 align="center">Hi 👋, I'm Umar</h1>
-<p align="left"> <a href="https://github.com/ryo-ma/github-profile-trophy"><img src="https://github-profile-trophy.vercel.app/?username=umara25" alt="umara25" /></a> </p>
-
 - 🔭 I’m currently working on [Velora](https://github.com/umara25/Velora)
 
 <h3 align="left">Connect with me:</h3>
