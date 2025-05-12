@@ -3,7 +3,7 @@
 </h1>
 
 
-<h3 align="center">A passionate computer science student @ McMaster University</h3>
+<h3 align="center">Computer Science student @ McMaster University</h3>
 
 - 👨‍💻 All of my projects are available at [umara25.github.io](umara25.github.io)
 
