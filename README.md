@@ -5,7 +5,7 @@
 
 <h3 align="center">Computer Science student @ McMaster University</h3>
 
-- 👨‍💻 All of my projects are available at [umara25.github.io](umara25.github.io)
+- 👨‍💻 All of my projects are available at [umara25.github.io](https://umara25.github.io/)
 
 - 📫 How to reach me **Umarahmer1@gmail.com**
 
