@@ -14,9 +14,6 @@ try {
     const imageBuffer = fs.readFileSync('home.png');
     homeImageBase64 = `data:image/png;base64,${imageBuffer.toString('base64')}`;
 
-    // Parse PNG IHDR (Start at byte 16, 4 bytes width, 4 bytes height, Big Endian)
-    // Signature: 8 bytes. Chunk Len: 4 bytes. Chunk Type (IHDR): 4 bytes. -> Data starts at 16.
-    // We assume valid PNG for simplicity.
     if (imageBuffer.length > 24) {
         const w = imageBuffer.readUInt32BE(16);
         const h = imageBuffer.readUInt32BE(20);
@@ -34,12 +31,10 @@ try {
 let fontStyles = '';
 try {
     const customTemplate = fs.readFileSync('template-custom.svg', 'utf-8');
-    // Match inside <defs><style> ... </style></defs>
     const match = customTemplate.match(/<defs>\s*<style>([\s\S]*?)<\/style>\s*<\/defs>/);
     if (match && match[1]) {
         fontStyles = match[1];
     } else {
-        // Fallback search
         const match2 = customTemplate.match(/<style>([\s\S]*?)<\/style>/);
         if (match2 && match2[1] && match2[1].includes('@font-face')) {
             fontStyles = match2[1];
@@ -59,7 +54,6 @@ fs.readFile('template-force.svg', 'utf-8', (error, data) => {
     let modified = data;
 
     // --- SCALE IMAGE TO FIT BUBBLE WIDTH ---
-    // If image is wider than 450 (bubble max width approx), scale height accordingly.
     const MAX_WIDTH = 450;
     let displayWidth = imgWidth;
     let displayHeight = imgHeight;
@@ -70,6 +64,34 @@ fs.readFile('template-force.svg', 'utf-8', (error, data) => {
         displayHeight = Math.round(imgHeight * ratio);
     }
 
+    // --- CALCULATE DYNAMIC FOOTER POSITION ---
+    const imageY = 282;
+    const gap = 20;
+    const footerY = imageY + displayHeight + gap;
+    const footerAnimStart = footerY + 5; // Start 5px lower for slide-up
+
+    console.log(`ℹ️  Image Height: ${displayHeight}, FooterY: ${footerY}`);
+
+    // Replace hardcoded Y=742 in HTML groups
+    // We use a regex to replace the specific group transforms for msg-6 and typing-6
+    // Looking for: <g transform="translate(10, 742)" class="typing-6">
+    // and class="msg-6"
+
+    // NOTE: Simple replace might be risky if 742 appears elsewhere, but it's specific enough in context usually.
+    // Better to use regex targeting the group specifically.
+
+    // Replace HTML transforms
+    modified = modified.replace(/transform="translate\(10, 742\)"/g, `transform="translate(10, ${footerY})"`);
+
+    // Replace CSS Keyframes
+    // @keyframes msg-6 { ... translate(10px, 747px); ... translate(10px, 742px); }
+    // We look for the block or specific values. 
+    // Given the file structure, we can replace the specific translation values.
+
+    modified = modified.replace('translate(10px, 747px)', `translate(10px, ${footerAnimStart}px)`);
+    modified = modified.replace('translate(10px, 742px)', `translate(10px, ${footerY}px)`);
+
+
     // --- CLIP PATH FOR ROUNDED CORNERS ---
     const clipPathId = 'img-clip-' + Date.now();
     const clipPathDef = `
@@ -79,7 +101,6 @@ fs.readFile('template-force.svg', 'utf-8', (error, data) => {
   `;
 
     // --- STYLE INJECTION (Inc. ClipPath) ---
-    // We inject fonts + the clip path into the placeholders
     let combinedDefs = '';
     if (fontStyles || clipPathDef) {
         combinedDefs = `<defs><style>${fontStyles || ''}</style>${clipPathDef}</defs>`;
@@ -100,6 +121,6 @@ fs.readFile('template-force.svg', 'utf-8', (error, data) => {
     // Write result
     fs.writeFile('chat.svg', modified, (err) => {
         if (err) console.error(err);
-        else console.log('✅ chat.svg generated with ROUNDED IMAGE and FONTS!');
+        else console.log('✅ chat.svg generated with DYNAMIC FOOTER POSITION!');
     });
 });
