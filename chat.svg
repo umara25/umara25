@@ -250,7 +250,7 @@
   <!-- Hi, I'm Umar -->
   <g transform="translate(10, 0)" class="msg-1 bubble">
     <rect width="133" height="42" rx="18" />
-    <text x="15" y="27">Hi, I'm Jason</text>
+    <text x="15" y="27">Hi, I'm Umar</text>
   </g>
 
   <!-- typing 2 -->
@@ -346,7 +346,7 @@
     <rect width="350" height="66" rx="18" class="bubble" />
     <text x="15" y="27">Check out PolyYield at</text>
     <text x="15" y="50">
-      <a xlink:href="https://github.com/umara25/PolyYield">https://bsky.app/profile/jasonlong.me</a>
+      <a xlink:href="https://github.com/umara25/PolyYield">https://github.com/umara25/PolyYield</a>
     </text>
   </g>
 
