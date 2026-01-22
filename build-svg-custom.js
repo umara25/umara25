@@ -43,26 +43,21 @@ fs.readFile('template-custom.svg', 'utf-8', (error, data) => {
   modified = modified.replace("Hi, I'm Jason", "Hi, I'm Umar");
 
   // Location
-  // 1. Text change
   modified = modified.replace(/I live in (Columbus|Toronto).*$/gm, "I live in Toronto, Ontario Canada");
-  // 2. Remove weather line
   modified = modified.replace(/{degF}° F \({degC}° C\) and <tspan class="emoji">{weatherEmoji}<\/tspan> today\./g, "");
-  // 3. Fix Box Height: msg-2 is <rect width="439" height="66" ...>
-  // Correct regex: Close the parenthesis for the quote group.
-  modified = modified.replace(/(class="msg-2"[\s\S]*?<rect width="\d+" height=")66("/g, '$142$2');
+
+  // Box Height Fix (Corrected Regex: Added closing parenthesis for group 2)
+  modified = modified.replace(/(class="msg-2"[\s\S]*?<rect width="\d+" height=")66(")/g, '$142$2');
 
 
   // Bio
-  // Target: "Computer Science @ McMaster University," or old stuff
   modified = modified.replace(/(Computer Science @ McMaster University,|I’m a product designer\. I used to work at GitHub,)/g, "I am currently interning @ EcoClaim");
-  // Target: "Ex Production Engineer Intern at Meta" or "but I’ve been at PlanetScale..."
   modified = modified.replace(/(Ex Production Engineer Intern at Meta|but I’ve been at PlanetScale for {psTime} now\.)/g, "and previously @ Meta");
 
 
   // Project PolyYield Link
   modified = modified.replace(/(Check out (my latest project: )?PolyYield(:)?)/g, "Check out PolyYield: https://polyyield.vercel.app/");
 
-  // Ensure description lines are correct
   if (!modified.includes("No-lose prediction markets")) {
     modified = modified.replace("A defi yield aggregator", "No-lose prediction markets where");
     modified = modified.replace("on the polygon chain", "your principal is always protected.");
@@ -78,27 +73,23 @@ fs.readFile('template-custom.svg', 'utf-8', (error, data) => {
      </g>`
     : '';
 
-  // Use regex to replace the specific block (Bluesky or previously modified)
-  // Match either the original Bluesky block OR the Image block if this is a re-run
   if (modified.includes('class="msg-5"')) {
     modified = modified.replace(/<g transform="translate\(\d+, \d+\)" class="msg-5">[\s\S]*?<\/g>/, imageBlock);
   } else if (modified.includes('<!-- Bluesky -->')) {
-    // Fallback if class wasn't found but comment exists
     const blueskyRegex = /<!-- Bluesky -->[\s\S]*?<\/g>/;
     modified = modified.replace(blueskyRegex, `<!-- Home Image -->\n${imageBlock}`);
   }
 
   // Footer (msg-6)
-  // 1. Text: Remove Emoji
+  // Text: Remove Emoji
   modified = modified.replace(/Have a great ({todayDay}|Thursday)! <tspan class="emoji">.*?<\/tspan>/g, "Have a great {todayDay}!");
 
-  // 2. Position: Move closer to image (from 632 to 600)
+  // Position: Move closer to image (from 632 to 600)
   modified = modified.replace(/transform="translate\(10, 632\)" class="msg-6"/g, 'transform="translate(10, 600)" class="msg-6"');
 
   // --- VARIABLES ---
   modified = modified.replace(/{mcMasterTime}/g, mcMasterTime);
   modified = modified.replace(/{todayDay}/g, todayDay);
-  // Important: Replace bubble width variable!
   const bubbleWidth = dayBubbleWidths[todayDay] || 245;
   modified = modified.replace(/{dayBubbleWidth}/g, bubbleWidth);
 
