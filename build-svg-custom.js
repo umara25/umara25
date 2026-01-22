@@ -8,6 +8,16 @@ const todayDay = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(to
 // Start date Fall 2022
 const mcMasterTime = formatDistance(new Date(2022, 8, 1), today, { addSuffix: false });
 
+const dayBubbleWidths = {
+  Monday: 235,
+  Tuesday: 235,
+  Wednesday: 260,
+  Thursday: 245,
+  Friday: 220,
+  Saturday: 245,
+  Sunday: 230,
+};
+
 // 2. Read Image
 let homeImageBase64 = '';
 try {
@@ -26,106 +36,75 @@ fs.readFile('template-custom.svg', 'utf-8', (error, data) => {
 
   let modified = data;
 
-  // --- STRICT REPLACEMENTS ---
+  // --- CONTENT REPLACEMENTS ---
 
   // Name
-  // Regex to match "Hi, I'm Jason" or "Hi, I'm Umar" (if already changed)
   modified = modified.replace(/Hi, I’m (Jason|Umar)/g, "Hi, I'm Umar");
-  modified = modified.replace("Hi, I'm Jason", "Hi, I'm Umar"); // Covering non-curly quote
+  modified = modified.replace("Hi, I'm Jason", "Hi, I'm Umar");
 
   // Location
-  // "I live in Columbus, Ohio where it’s supposed to be" -> "I live in Toronto, Ontario Canada"
-  // Using regex to capture the whole line if possible, or just the known prefix
-  modified = modified.replace(/I live in Columbus, Ohio where it’s supposed to be/g, "I live in Toronto, Ontario Canada");
-  // Also clean up the weather line that follows it in the original template
+  // 1. Text change
+  modified = modified.replace(/I live in (Columbus|Toronto).*$/gm, "I live in Toronto, Ontario Canada");
+  // 2. Remove weather line
   modified = modified.replace(/{degF}° F \({degC}° C\) and <tspan class="emoji">{weatherEmoji}<\/tspan> today\./g, "");
-  // If previously replaced with "I live in Toronto, Canada...", fix it to "Toronto, Ontario Canada"
-  modified = modified.replace("I live in Toronto, Canada 🇨🇦", "I live in Toronto, Ontario Canada");
+  // 3. Fix Box Height: msg-2 is <rect width="439" height="66" ...>
+  // Correct regex: Close the parenthesis for the quote group.
+  modified = modified.replace(/(class="msg-2"[\s\S]*?<rect width="\d+" height=")66("/g, '$142$2');
+
 
   // Bio
-  // Target the specific lines.
-  // Old: "I’m a product designer. I used to work at GitHub,"
-  // New: "current swe intern @ EcoClaim"
-  modified = modified.replace(/I’m a product designer\. I used to work at GitHub,/g, "current swe intern @ EcoClaim");
-  // Old part 2: "but I’ve been at PlanetScale for {psTime} now."
-  // New: "ex PE intern @ Meta"
-  modified = modified.replace(/but I’ve been at PlanetScale for {psTime} now\./g, "ex PE intern @ Meta");
-  // Handle previous attempt's strings if they exist
-  modified = modified.replace("Computer Science @ McMaster University,", "current swe intern @ EcoClaim");
-  modified = modified.replace("Ex Production Engineer Intern at Meta", "ex PE intern @ Meta");
+  // Target: "Computer Science @ McMaster University," or old stuff
+  modified = modified.replace(/(Computer Science @ McMaster University,|I’m a product designer\. I used to work at GitHub,)/g, "I am currently interning @ EcoClaim");
+  // Target: "Ex Production Engineer Intern at Meta" or "but I’ve been at PlanetScale..."
+  modified = modified.replace(/(Ex Production Engineer Intern at Meta|but I’ve been at PlanetScale for {psTime} now\.)/g, "and previously @ Meta");
 
 
-  // Project PolyYield
-  // "My favorite project is isometric-contributions. It’s a "
-  modified = modified.replace(/My favorite project is isometric-contributions\. It’s a /g, "Check out PolyYield:");
-  // "browser extension that shows your GitHub " -> "No-lose prediction markets where"
-  modified = modified.replace(/browser extension that shows your GitHub /g, "No-lose prediction markets where");
-  // "contributions like this" -> "your principal is always protected."
-  modified = modified.replace(/contributions like this/g, "your principal is always protected.");
+  // Project PolyYield Link
+  modified = modified.replace(/(Check out (my latest project: )?PolyYield(:)?)/g, "Check out PolyYield: https://polyyield.vercel.app/");
 
-  // Previous attempt fixes might need overwriting too
-  modified = modified.replace("Check out my latest project: PolyYield", "Check out PolyYield:");
-  modified = modified.replace("A defi yield aggregator", "No-lose prediction markets where");
-  modified = modified.replace("on the polygon chain", "your principal is always protected.");
+  // Ensure description lines are correct
+  if (!modified.includes("No-lose prediction markets")) {
+    modified = modified.replace("A defi yield aggregator", "No-lose prediction markets where");
+    modified = modified.replace("on the polygon chain", "your principal is always protected.");
+  }
 
 
-  // --- REMOVE BLUESKY / ADD IMAGE ---
-  // The Bluesky section is commonly in a group with class "msg-5" or distinct text.
-  // We'll replace the entire Bluesky block with our Image block.
+  // --- IMAGE & FOOTER ---
 
+  // Image Replacement (msg-5)
   const imageBlock = homeImageBase64 ?
     `<g transform="translate(10, 320)" class="msg-5">
        <image x="0" y="0" width="450" href="${homeImageBase64}" />
      </g>`
-    : ''; // If no image, just remove.
+    : '';
 
-  // Regex to find the Bluesky group. It contains "bsky.app"
-  // We look for <g ... class="msg-5"> ... </g> roughly.
-  // Safer to match the unique text content and replace parents if possible, or just the text?
-  // Let's replace the link text and the preceding "Check out..." with empty, or the image.
-
-  // Actually, simplest is to repurpose msg-5 for the image if we can fit it.
-  // But `msg-5` might have a `<rect>` bubble we don't want for a raw image.
-  // Let's try to string replace the whole block if we can identify it.
-  // The block starts with `<!-- Bluesky -->` in my previous `view_file`.
-
-  const blueskyRegex = /<!-- Bluesky -->[\s\S]*?class="msg-5"[\s\S]*?<\/g>/;
-  if (blueskyRegex.test(modified)) {
+  // Use regex to replace the specific block (Bluesky or previously modified)
+  // Match either the original Bluesky block OR the Image block if this is a re-run
+  if (modified.includes('class="msg-5"')) {
+    modified = modified.replace(/<g transform="translate\(\d+, \d+\)" class="msg-5">[\s\S]*?<\/g>/, imageBlock);
+  } else if (modified.includes('<!-- Bluesky -->')) {
+    // Fallback if class wasn't found but comment exists
+    const blueskyRegex = /<!-- Bluesky -->[\s\S]*?<\/g>/;
     modified = modified.replace(blueskyRegex, `<!-- Home Image -->\n${imageBlock}`);
-  } else {
-    // Fallback: If comment is missing, find by unique content
-    const linkRegex = /<g transform="translate\(10, 560\)" class="msg-5">[\s\S]*?bsky\.app[\s\S]*?<\/g>/;
-    modified = modified.replace(linkRegex, `<!-- Home Image -->\n${imageBlock}`);
   }
 
-  // If the image tag was removed previously (as found in search), we just inserted it above ^
-  // If the previous image tag text "data:image/png;base64" was replaced by "width=0", we should ensure we don't have ghost tags.
-  // But since we are replacing the "Bluesky" section (msg-5) with the new Image, 
-  // and the *original* image was somewhere else (msg 4.5?), we should be okay.
-  // Wait, I should double check where the *Original* big image was. 
-  // It was usually *inside* the project description or adjacent. 
-  // If my previous script removed it effectively, it's gone.
-  // The user wants `home.png` *instead* of whatever was there.
-  // Putting it in the `msg-5` slot (formatted as the imageBlock) seems appropriate as it's the "next" item sequence.
-  // We might need to adjust the Y-coordinate of msg-5 (formerly 560) to be closer to the text if there's a gap.
-  // Text ends around 300. 560 is far down. Let's move it up to 320 (as defined in imageBlock).
+  // Footer (msg-6)
+  // 1. Text: Remove Emoji
+  modified = modified.replace(/Have a great ({todayDay}|Thursday)! <tspan class="emoji">.*?<\/tspan>/g, "Have a great {todayDay}!");
 
-  // We also need to move `msg-6` (Footer) up if we move `msg-5` up, OR just let it act as a spacer?
-  // 560 to 320 is -240px. The footer is at 632. -240 => 392.
-  // If I move msg-5 to 320, I should move msg-6 to roughly 320 + height_of_image + padding.
-  // Height of image is set to ~250? (width 450, aspect ratio?). 
-  // Let's assume height 300 for safety. 320 + 300 = 620. 
-  // Use regex to adjust `msg-6` y-coordinate if needed.
-  // `transform="translate(10, 632)"` -> `transform="translate(10, 650)"` (just to be safe).
-  // Actually, let's just leave the footer where it is (632), it fits a ~300px image at y=320.
+  // 2. Position: Move closer to image (from 632 to 600)
+  modified = modified.replace(/transform="translate\(10, 632\)" class="msg-6"/g, 'transform="translate(10, 600)" class="msg-6"');
 
   // --- VARIABLES ---
-  modified = modified.replace('{mcMasterTime}', mcMasterTime);
-  modified = modified.replace('{todayDay}', todayDay);
+  modified = modified.replace(/{mcMasterTime}/g, mcMasterTime);
+  modified = modified.replace(/{todayDay}/g, todayDay);
+  // Important: Replace bubble width variable!
+  const bubbleWidth = dayBubbleWidths[todayDay] || 245;
+  modified = modified.replace(/{dayBubbleWidth}/g, bubbleWidth);
 
   // Write result
   fs.writeFile('chat.svg', modified, (err) => {
     if (err) console.error(err);
-    else console.log('✅ chat.svg generated with home.png and specific text fixes!');
+    else console.log('✅ chat.svg generated: Bio, Link, Location(42px), Footer(600px+NoEmoji+BubbleFixed)!');
   });
 });
