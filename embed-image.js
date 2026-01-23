@@ -81,11 +81,12 @@ fs.readFile('template-force.svg', 'utf-8', (error, data) => {
     modified = modified.replace(/viewBox="0 0 600 800"/, `viewBox="0 0 600 ${totalHeight}"`);
 
     // 2. Move Footer Group
-    modified = modified.replace(/transform="translate\(10, 742\)"/g, `transform="translate(10, ${footerY})"`);
+    // 2. Move Footer Group (handle potential spacing)
+    modified = modified.replace(/transform="translate\(10,\s*742\)"/g, `transform="translate(10, ${footerY})"`);
 
-    // 3. Update Footer Animations
-    modified = modified.replace('translate(10px, 747px)', `translate(10px, ${footerAnimStart}px)`);
-    modified = modified.replace('translate(10px, 742px)', `translate(10px, ${footerY}px)`);
+    // 3. Update Footer Animations (handle px units and spacing)
+    modified = modified.replace(/translate\(10px,\s*747px\)/g, `translate(10px, ${footerAnimStart}px)`);
+    modified = modified.replace(/translate\(10px,\s*742px\)/g, `translate(10px, ${footerY}px)`);
 
     // --- CLIP PATH FOR ROUNDED CORNERS ---
     const clipPathId = 'img-clip-' + Date.now();
