@@ -64,33 +64,28 @@ fs.readFile('template-force.svg', 'utf-8', (error, data) => {
         displayHeight = Math.round(imgHeight * ratio);
     }
 
-    // --- CALCULATE DYNAMIC FOOTER POSITION ---
+    // --- CALCULATE DYNAMIC POSITIONS & SVG HEIGHT ---
     const imageY = 282;
     const gap = 20;
     const footerY = imageY + displayHeight + gap;
-    const footerAnimStart = footerY + 5; // Start 5px lower for slide-up
+    const footerAnimStart = footerY + 5;
 
-    console.log(`ℹ️  Image Height: ${displayHeight}, FooterY: ${footerY}`);
+    // Footer Bubble Height is 42px. We add ~40px padding at bottom.
+    const totalHeight = footerY + 42 + 40;
 
-    // Replace hardcoded Y=742 in HTML groups
-    // We use a regex to replace the specific group transforms for msg-6 and typing-6
-    // Looking for: <g transform="translate(10, 742)" class="typing-6">
-    // and class="msg-6"
+    console.log(`ℹ️  ImgH: ${displayHeight}, FooterY: ${footerY}, TotalSVGHeight: ${totalHeight}`);
 
-    // NOTE: Simple replace might be risky if 742 appears elsewhere, but it's specific enough in context usually.
-    // Better to use regex targeting the group specifically.
+    // 1. Update SVG Dimensions
+    // Regex to replace height="800" and viewBox="0 0 600 800"
+    modified = modified.replace(/height="800"/, `height="${totalHeight}"`);
+    modified = modified.replace(/viewBox="0 0 600 800"/, `viewBox="0 0 600 ${totalHeight}"`);
 
-    // Replace HTML transforms
+    // 2. Move Footer Group
     modified = modified.replace(/transform="translate\(10, 742\)"/g, `transform="translate(10, ${footerY})"`);
 
-    // Replace CSS Keyframes
-    // @keyframes msg-6 { ... translate(10px, 747px); ... translate(10px, 742px); }
-    // We look for the block or specific values. 
-    // Given the file structure, we can replace the specific translation values.
-
+    // 3. Update Footer Animations
     modified = modified.replace('translate(10px, 747px)', `translate(10px, ${footerAnimStart}px)`);
     modified = modified.replace('translate(10px, 742px)', `translate(10px, ${footerY}px)`);
-
 
     // --- CLIP PATH FOR ROUNDED CORNERS ---
     const clipPathId = 'img-clip-' + Date.now();
@@ -100,7 +95,7 @@ fs.readFile('template-force.svg', 'utf-8', (error, data) => {
     </clipPath>
   `;
 
-    // --- STYLE INJECTION (Inc. ClipPath) ---
+    // --- STYLE INJECTION ---
     let combinedDefs = '';
     if (fontStyles || clipPathDef) {
         combinedDefs = `<defs><style>${fontStyles || ''}</style>${clipPathDef}</defs>`;
@@ -121,6 +116,6 @@ fs.readFile('template-force.svg', 'utf-8', (error, data) => {
     // Write result
     fs.writeFile('chat.svg', modified, (err) => {
         if (err) console.error(err);
-        else console.log('✅ chat.svg generated with DYNAMIC FOOTER POSITION!');
+        else console.log('✅ chat.svg generated (CROPPED & SPACED)');
     });
 });
